@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}配置 | Learning-Chat{% endblock %}
+
+{% block content %}
+
+{% if success %}
+<article style="background: var(--pico-ins-color); border-color: var(--pico-ins-color);">
+  ✅ {{ success }}
+</article>
+{% endif %}
+{% if error_msg %}
+<article style="background: var(--pico-del-color); border-color: var(--pico-del-color);">
+  ❌ {{ error_msg }}
+</article>
+{% endif %}
+
+<hgroup>
+  <h2>⚙️ 全局配置</h2>
+  <p>控制所有群的学习行为</p>
+</hgroup>
+
+<form method="post" action="/learning_chat/admin/config">
+  <input type="hidden" name="form_type" value="global">
+  <div class="grid">
+    <label>
+      群聊学习总开关
+      <select name="total_enable">
+        <option value="true" {% if global.total_enable %}selected{% endif %}>开启</option>
+        <option value="false" {% if not global.total_enable %}selected{% endif %}>关闭</option>
+      </select>
+      <small>关闭后全局不再学习和回复</small>
+    </label>
+    <label>
+      后台管理开关
+      <select name="enable_web">
+        <option value="true" {% if global.enable_web %}selected{% endif %}>开启</option>
+        <option value="false" {% if not global.enable_web %}selected{% endif %}>关闭</option>
+      </select>
+    </label>
+  </div>
+  <div class="grid">
+    <label>
+      后台用户名
+      <input name="web_username" value="{{ global.web_username }}" required>
+    </label>
+    <label>
+      后台密码
+      <input type="password" name="web_password" value="{{ global.web_password }}" required>
+    </label>
+  </div>
+  <label>
+    Token密钥
+    <input name="web_secret_key" value="{{ global.web_secret_key }}">
+  </label>
+  <div class="grid">
+    <label>
+      关键词分词数量
+      <input type="number" name="KEYWORDS_SIZE" value="{{ global.KEYWORDS_SIZE }}" min="2" required>
+      <small>影响主题词提取效果，建议3</small>
+    </label>
+    <label>
+      跨群回复阈值
+      <input type="number" name="cross_group_threshold" value="{{ global.cross_group_threshold }}" min="1" required>
+      <small>在N个群出现后变为全局回复</small>
+    </label>
+    <label>
+      最高学习次数
+      <input type="number" name="learn_max_count" value="{{ global.learn_max_count }}" min="2" required>
+      <small>值越高越容易固定回复某句话</small>
+    </label>
+  </div>
+  <label>
+    全局屏蔽词
+    <input name="ban_words" value="{{ global.ban_words | join(',') }}" placeholder="多个用逗号分隔">
+    <small>含有这些词的消息不会学习和回复</small>
+  </label>
+  <label>
+    全局屏蔽用户
+    <input name="ban_users" value="{{ global.ban_users | join(',') }}" placeholder="多个用逗号分隔">
+    <small>这些用户的消息不会学习和回复</small>
+  </label>
+  <label>
+    自定义词典
+    <input name="dictionary" value="{{ global.dictionary | join(',') }}" placeholder="多个用逗号分隔">
+    <small>帮助分词识别未收录词汇</small>
+  </label>
+  <div style="display:flex; gap:1rem;">
+    <button type="submit">💾 保存全局配置</button>
+    <button type="reset" class="secondary">重置</button>
+  </div>
+</form>
+
+<hr>
+
+<hgroup>
+  <h2>🎯 分群配置</h2>
+  <p>针对特定群的个性化设置</p>
+</hgroup>
+
+<form method="get" action="/learning_chat/admin/config">
+  <label>
+    选择群
+    <select name="group_id" onchange="this.form.submit()">
+      <option value="">-- 请选择群 --</option>
+      {% for g in group_list %}
+      <option value="{{ g.value }}" {% if group_id and group_id|int == g.value %}selected{% endif %}>
+        {{ g.label }}
+      </option>
+      {% endfor %}
+    </select>
+  </label>
+</form>
+
+{% if group_config %}
+<form method="post" action="/learning_chat/admin/config?group_id={{ group_id }}">
+  <input type="hidden" name="form_type" value="group">
+  <input type="hidden" name="group_id" value="{{ group_id }}">
+  <div class="grid">
+    <label>
+      群聊学习开关
+      <select name="enable">
+        <option value="true" {% if group_config.enable %}selected{% endif %}>开启</option>
+        <option value="false" {% if not group_config.enable %}selected{% endif %}>关闭</option>
+      </select>
+    </label>
+    <label>
+      回复阈值
+      <input type="number" name="answer_threshold" value="{{ group_config.answer_threshold }}" min="2" required>
+      <small>值越低学得越快</small>
+    </label>
+  </div>
+  <label>
+    回复阈值权重
+    <input name="answer_threshold_weights" value="{{ group_config.answer_threshold_weights | join(',') }}" placeholder="用逗号分隔，如 10,30,60">
+    <small>影响回复阈值计算概率分布</small>
+  </label>
+  <div class="grid">
+    <label>
+      复读阈值
+      <input type="number" name="repeat_threshold" value="{{ group_config.repeat_threshold }}" min="2" required>
+      <small>N个人复读后跟着复读</small>
+    </label>
+    <label>
+      打断复读概率 (%)
+      <input type="number" name="break_probability" value="{{ (group_config.break_probability * 100) | round }}" min="0" max="100">
+    </label>
+  </div>
+  <label>
+    屏蔽词
+    <input name="ban_words" value="{{ group_config.ban_words | join(',') }}" placeholder="多个用逗号分隔">
+  </label>
+  <label>
+    屏蔽用户
+    <input name="ban_users" value="{{ group_config.ban_users | join(',') }}" placeholder="多个用逗号分隔">
+  </label>
+  <div class="grid">
+    <label>
+      主动发言开关
+      <select name="speak_enable">
+        <option value="true" {% if group_config.speak_enable %}selected{% endif %}>开启</option>
+        <option value="false" {% if not group_config.speak_enable %}selected{% endif %}>关闭</option>
+      </select>
+    </label>
+    <label>
+      主动发言阈值
+      <input type="number" name="speak_threshold" value="{{ group_config.speak_threshold }}" min="0">
+      <small>越低越容易主动发言</small>
+    </label>
+  </div>
+  <div class="grid">
+    <label>
+      最小发言间隔 (秒)
+      <input type="number" name="speak_min_interval" value="{{ group_config.speak_min_interval }}" min="0">
+    </label>
+    <label>
+      连续发言概率 (%)
+      <input type="number" name="speak_continuously_probability" value="{{ (group_config.speak_continuously_probability * 100) | round }}" min="0" max="100">
+    </label>
+    <label>
+      最大连续发言句数
+      <input type="number" name="speak_continuously_max_len" value="{{ group_config.speak_continuously_max_len }}" min="1">
+    </label>
+    <label>
+      戳一戳概率 (%)
+      <input type="number" name="speak_poke_probability" value="{{ (group_config.speak_poke_probability * 100) | round }}" min="0" max="100">
+    </label>
+  </div>
+  <div style="display:flex; gap:1rem;">
+    <button type="submit">💾 保存分群配置</button>
+    <button type="submit" formaction="/learning_chat/admin/config?group_id=all&form_type=group_all" class="secondary">📋 应用到所有群</button>
+    <button type="reset" class="secondary">重置</button>
+  </div>
+</form>
+{% endif %}
+
+{% endblock %}

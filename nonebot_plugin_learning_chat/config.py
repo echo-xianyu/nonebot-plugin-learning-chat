@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from nonebot import get_driver, logger
 from nonebot.utils import escape_tag
-from ruamel import yaml
+from ruamel.yaml import YAML
 
 CONFIG_PATH = Path() / "data" / "learning_chat" / "learning_chat.yml"
 CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -43,8 +43,8 @@ class ChatGroupConfig(BaseModel):
 
     def update(self, **kwargs):
         for key, value in kwargs.items():
-            if key in self.__fields__:
-                self.__setattr__(key, value)
+            if key in self.model_fields:
+                setattr(self, key, value)
 
 
 class ChatConfig(BaseModel):
@@ -66,17 +66,18 @@ class ChatConfig(BaseModel):
 
     def update(self, **kwargs):
         for key, value in kwargs.items():
-            if key in self.__fields__:
-                self.__setattr__(key, value)
+            if key in self.model_fields:
+                setattr(self, key, value)
 
 
 class ChatConfigManager:
     def __init__(self):
         self.file_path = CONFIG_PATH
         if self.file_path.exists():
-            self.config = ChatConfig.parse_obj(
-                yaml.load(
-                    self.file_path.read_text(encoding="utf-8"), Loader=yaml.Loader
+            _yaml = YAML(typ="safe")
+            self.config = ChatConfig.model_validate(
+                _yaml.load(
+                    self.file_path.read_text(encoding="utf-8")
                 )
             )
         else:
@@ -91,16 +92,16 @@ class ChatConfigManager:
 
     @property
     def config_list(self) -> List[str]:
-        return list(self.config.dict(by_alias=True).keys())
+        return list(self.config.model_dump(by_alias=True).keys())
 
     def save(self):
         with self.file_path.open("w", encoding="utf-8") as f:
-            yaml.dump(
-                self.config.dict(by_alias=True),
+            _yaml = YAML(typ="rt")
+            _yaml.indent = 2
+            _yaml.allow_unicode = True
+            _yaml.dump(
+                self.config.model_dump(by_alias=True),
                 f,
-                indent=2,
-                Dumper=yaml.RoundTripDumper,
-                allow_unicode=True,
             )
 
 

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}学习内容 | Learning-Chat{% endblock %}
+{% from "macros.html" import pagination, sort_link %}
+
+{% block content %}
+
+<hgroup>
+  <h2>📝 学习内容</h2>
+  <p>bot已学习的关键词/内容及其回复</p>
+</hgroup>
+
+{% if success %}
+<article style="background: var(--pico-ins-color); border-color: var(--pico-ins-color);">✅ {{ success }}</article>
+{% endif %}
+
+<form method="get" class="grid" style="margin-bottom: 1rem;">
+  <input name="keywords" placeholder="搜索关键词/内容" value="{{ params.get('keywords', '') }}">
+  <button type="submit">🔍 搜索</button>
+  <a href="?" role="button" class="secondary">清除</a>
+</form>
+
+<div style="margin-bottom: 0.5rem;">
+  <small>共 {{ total }} 条内容，第 {{ page }}/{{ total_pages }} 页</small>
+  <form method="post" action="/learning_chat/admin/contexts/delete-all" class="inline-form" style="float:right;" onsubmit="return confirm('确定要删除所有已学内容吗？')">
+    <button type="submit" class="danger" style="font-size:85%;">🗑 删除全部</button>
+  </form>
+</div>
+
+<figure>
+  <table class="striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>内容/关键词</th>
+        <th>{{ sort_link('最后学习时间', 'time', order_by, order_dir, '/learning_chat/admin/contexts', params) }}</th>
+        <th>{{ sort_link('已学次数', 'count', order_by, order_dir, '/learning_chat/admin/contexts', params) }}</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td><small>{{ item.id }}</small></td>
+        <td>
+          <span class="text-sm">{{ item.keywords[:50] }}{% if item.keywords|length > 50 %}...{% endif %}</span>
+          {% if item.keywords|length > 50 %}
+          <details><summary>展开</summary><span class="break-all text-sm">{{ item.keywords }}</span></details>
+          {% endif %}
+        </td>
+        <td><small>{{ item.time | int | datetime }}</small></td>
+        <td><strong>{{ item.count }}</strong></td>
+        <td class="actions">
+          <a href="/learning_chat/admin/answers?context_id={{ item.id }}" role="button" class="outline" style="font-size:80%;">回复列表</a>
+          <form method="post" action="/learning_chat/admin/contexts/ban/{{ item.id }}" class="inline-form" onsubmit="return confirm('禁用该学习内容及其所有回复？')">
+            <button type="submit" class="outline danger" style="font-size:80%;">禁用</button>
+          </form>
+          <form method="post" action="/learning_chat/admin/contexts/delete/{{ item.id }}" class="inline-form" onsubmit="return confirm('删除该学习内容及其所有回复？(不禁用，可重新学习)')">
+            <button type="submit" class="outline secondary" style="font-size:80%;">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;">暂无数据</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</figure>
+
+{{ pagination(page, total_pages, '/learning_chat/admin/contexts', params) }}
+
+{% endblock %}

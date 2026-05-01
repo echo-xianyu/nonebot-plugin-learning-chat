@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}消息 | Learning-Chat{% endblock %}
+{% from "macros.html" import pagination, sort_link %}
+
+{% block content %}
+
+<hgroup>
+  <h2>💬 群聊消息记录</h2>
+  <p>bot收到的聊天记录（可用于查看bot的回复）</p>
+</hgroup>
+
+{% if success %}
+<article style="background: var(--pico-ins-color); border-color: var(--pico-ins-color);">✅ {{ success }}</article>
+{% endif %}
+
+<form method="get" class="grid" style="margin-bottom: 1rem;">
+  <input name="group_id" placeholder="群ID" value="{{ params.get('group_id', '') }}">
+  <input name="user_id" placeholder="用户ID" value="{{ params.get('user_id', '') }}">
+  <input name="message" placeholder="消息关键词" value="{{ params.get('message', '') }}">
+  <button type="submit">🔍 搜索</button>
+  <a href="?" role="button" class="secondary">清除</a>
+</form>
+
+<div style="margin-bottom: 0.5rem;">
+  <small>共 {{ total }} 条记录，第 {{ page }}/{{ total_pages }} 页</small>
+  <form method="post" action="/learning_chat/admin/messages/delete-all" class="inline-form" style="float:right;" onsubmit="return confirm('确定要删除所有聊天记录吗？此操作不可恢复！')">
+    <button type="submit" class="danger" style="font-size:85%;">🗑 删除全部</button>
+  </form>
+</div>
+
+<figure>
+  <table class="striped">
+    <thead>
+      <tr>
+        <th>消息ID</th>
+        <th>群ID</th>
+        <th>用户ID</th>
+        <th>{{ sort_link('消息内容', 'message', order_by, order_dir, '/learning_chat/admin/messages', params) }}</th>
+        <th>{{ sort_link('时间', 'time', order_by, order_dir, '/learning_chat/admin/messages', params) }}</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td><small>{{ item.message_id }}</small></td>
+        <td><code>{{ item.group_id }}</code></td>
+        <td><code>{{ item.user_id }}</code></td>
+        <td>
+          <span class="text-sm">{{ item.raw_message[:50] }}{% if item.raw_message|length > 50 %}...{% endif %}</span>
+          {% if item.raw_message|length > 50 %}
+          <details><summary>展开</summary><span class="break-all text-sm">{{ item.raw_message }}</span></details>
+          {% endif %}
+        </td>
+        <td><small>{{ item.time | int | datetime }}</small></td>
+        <td class="actions">
+          <form method="post" action="/learning_chat/admin/messages/ban/{{ item.id }}" class="inline-form" onsubmit="return confirm('禁用该消息相关的学习内容和回复？')">
+            <button type="submit" class="outline danger" style="font-size:80%;">禁用</button>
+          </form>
+          <form method="post" action="/learning_chat/admin/messages/delete/{{ item.id }}" class="inline-form" onsubmit="return confirm('删除该条聊天记录？')">
+            <button type="submit" class="outline secondary" style="font-size:80%;">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;">暂无数据</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</figure>
+
+{{ pagination(page, total_pages, '/learning_chat/admin/messages', params) }}
+
+{% endblock %}

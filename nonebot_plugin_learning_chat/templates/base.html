@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Learning-Chat Admin{% endblock %}</title>
+    <link rel="stylesheet" href="/learning_chat/static/pico.min.css">
+    <style>
+        :root { --pico-font-size: 90%; }
+        [data-theme="dark"] { --pico-background-color: #13171f; }
+        .container { max-width: 1200px; }
+        .danger { background-color: var(--pico-del-color); border-color: var(--pico-del-color); }
+        .text-danger { color: var(--pico-del-color); }
+        td.actions { white-space: nowrap; }
+        td.actions a, td.actions button { margin-right: 4px; padding: 2px 8px; font-size: 85%; }
+        .break-all { word-break: break-all; }
+        .text-sm { font-size: 85%; }
+        dialog article { min-width: 360px; }
+        .inline-form { display: inline; }
+    </style>
+</head>
+<body>
+    <header class="container">
+        <nav>
+            <ul>
+                <li><strong>🧠 Learning-Chat</strong></li>
+            </ul>
+            <ul>
+                <li><a href="/learning_chat/admin" role="button" class="{% if active == 'config' %}outline{% else %}secondary outline{% endif %}">配置</a></li>
+                <li><a href="/learning_chat/admin/messages" role="button" class="{% if active == 'messages' %}outline{% else %}secondary outline{% endif %}">消息</a></li>
+                <li><a href="/learning_chat/admin/contexts" role="button" class="{% if active == 'contexts' %}outline{% else %}secondary outline{% endif %}">内容</a></li>
+                <li><a href="/learning_chat/admin/answers" role="button" class="{% if active == 'answers' %}outline{% else %}secondary outline{% endif %}">回复</a></li>
+                <li><a href="/learning_chat/admin/blacklist" role="button" class="{% if active == 'blacklist' %}outline{% else %}secondary outline{% endif %}">黑名单</a></li>
+                <li><button id="theme-toggle" class="secondary" style="font-size:120%">🌙</button></li>
+                <li><a href="/learning_chat/logout" role="button" class="secondary outline">退出</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="container" style="text-align:center; padding: 1rem 0; opacity: 0.7;">
+        <small>Learning-Chat Admin &copy; 2021-2026 &middot; Powered by <a href="https://picocss.com" target="_blank">Pico.css</a></small>
+    </footer>
+    <script src="/learning_chat/static/theme.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

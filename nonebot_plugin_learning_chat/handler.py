@@ -275,14 +275,22 @@ class LearningChat:
                 f"➤➤本次回复阈值为<m>{answer_count_threshold}</m>，跨群阈值为<m>{cross_group_threshold}</m>",
             )
             # 获取满足跨群条件的回复
-            answers_cross = await ChatAnswer.filter(
-                context=context,
-                count__gte=answer_count_threshold,
-                keywords__in=await ChatAnswer.annotate(cross=Count("keywords"))
-                .group_by("keywords")
-                .filter(cross__gte=cross_group_threshold)
-                .values_list("keywords", flat=True),
-            )
+            # 先获取跨群关键词列表，然后分块查询避免SQLite参数上限
+            cross_keywords = await ChatAnswer.annotate(cross=Count("keywords")) \
+                .group_by("keywords") \
+                .filter(cross__gte=cross_group_threshold) \
+                .values_list("keywords", flat=True)
+
+            answers_cross = []
+            chunk_size = 500
+            for i in range(0, len(cross_keywords), chunk_size):
+                chunk = cross_keywords[i:i + chunk_size]
+                chunk_answers = await ChatAnswer.filter(
+                    context=context,
+                    count__gte=answer_count_threshold,
+                    keywords__in=chunk,
+                )
+                answers_cross.extend(chunk_answers)
 
             answer_same_group = await ChatAnswer.filter(
                 context=context,

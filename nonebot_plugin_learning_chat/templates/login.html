@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 | Learning-Chat Admin</title>
+    <link rel="stylesheet" href="/learning_chat/static/pico.min.css">
+    <style>
+        :root { --pico-font-size: 90%; }
+        .login-box { max-width: 400px; margin: 15vh auto; }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <article class="login-box">
+            <hgroup>
+                <h2>🔐 登录</h2>
+                <p>Learning-Chat 后台管理</p>
+            </hgroup>
+            <form method="post">
+                <label>
+                    用户名
+                    <input name="username" placeholder="用户名" required autocomplete="username">
+                </label>
+                <label>
+                    密码
+                    <input type="password" name="password" placeholder="密码" required autocomplete="current-password">
+                </label>
+                <button type="submit">登录</button>
+            </form>
+            {% if error %}
+            <p style="color: var(--pico-del-color); margin-top: 1rem;">❌ {{ error }}</p>
+            {% endif %}
+            <footer style="margin-top: 1.5rem; opacity: 0.6;">
+                <small>默认用户名: chat / 密码: admin</small>
+            </footer>
+        </article>
+    </main>
+</body>
+</html>

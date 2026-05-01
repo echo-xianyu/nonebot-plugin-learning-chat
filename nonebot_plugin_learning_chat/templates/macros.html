@@ -1,0 +1,45 @@
+{% macro pagination(current_page, total_pages, base_url, params={}) %}
+{% if total_pages > 1 %}
+<nav aria-label="Pagination">
+  <ul>
+    <li>
+      {% if current_page > 1 %}
+      <a href="{{ base_url }}?{% for k,v in params.items() if k != 'page' %}{{ k }}={{ v }}&{% endfor %}page={{ current_page - 1 }}" aria-label="Previous">&laquo;</a>
+      {% else %}
+      <span aria-disabled="true">&laquo;</span>
+      {% endif %}
+    </li>
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == 1 or p == total_pages or (p >= current_page - 2 and p <= current_page + 2) %}
+    <li>
+      {% if p == current_page %}
+      <a href="#" aria-current="page">{{ p }}</a>
+      {% else %}
+      <a href="{{ base_url }}?{% for k,v in params.items() if k != 'page' %}{{ k }}={{ v }}&{% endfor %}page={{ p }}">{{ p }}</a>
+      {% endif %}
+    </li>
+      {% elif p == current_page - 3 or p == current_page + 3 %}
+    <li><span>&hellip;</span></li>
+      {% endif %}
+    {% endfor %}
+    <li>
+      {% if current_page < total_pages %}
+      <a href="{{ base_url }}?{% for k,v in params.items() if k != 'page' %}{{ k }}={{ v }}&{% endfor %}page={{ current_page + 1 }}" aria-label="Next">&raquo;</a>
+      {% else %}
+      <span aria-disabled="true">&raquo;</span>
+      {% endif %}
+    </li>
+  </ul>
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro sort_link(label, field, current_order_by, current_order_dir, base_url, params={}) %}
+{% set new_dir = 'desc' if field != current_order_by or current_order_dir == 'asc' else 'asc' %}
+<a href="{{ base_url }}?{% for k,v in params.items() if k not in ('orderBy', 'orderDir') %}{{ k }}={{ v }}&{% endfor %}orderBy={{ field }}&orderDir={{ new_dir }}">
+  {{ label }}
+  {% if field == current_order_by %}
+    {{ '▼' if current_order_dir == 'desc' else '▲' }}
+  {% endif %}
+</a>
+{% endmacro %}

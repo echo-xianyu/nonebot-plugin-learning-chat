@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}黑名单 | Learning-Chat{% endblock %}
+{% from "macros.html" import pagination %}
+
+{% block content %}
+
+<hgroup>
+  <h2>🚫 禁用列表</h2>
+  <p>被禁用的内容/关键词，不会再被学习</p>
+</hgroup>
+
+{% if success %}
+<article style="background: var(--pico-ins-color); border-color: var(--pico-ins-color);">✅ {{ success }}</article>
+{% endif %}
+
+<form method="get" class="grid" style="margin-bottom: 1rem;">
+  <input name="keywords" placeholder="搜索关键词" value="{{ params.get('keywords', '') }}">
+  <button type="submit">🔍 搜索</button>
+  <a href="?" role="button" class="secondary">清除</a>
+</form>
+
+<div style="margin-bottom: 0.5rem;">
+  <small>共 {{ total }} 条禁用，第 {{ page }}/{{ total_pages }} 页</small>
+  <form method="post" action="/learning_chat/admin/blacklist/delete-all" class="inline-form" style="float:right;" onsubmit="return confirm('确定要取消所有禁用吗？被禁用的内容需要重新学习！')">
+    <button type="submit" class="danger" style="font-size:85%;">🗑 取消全部禁用</button>
+  </form>
+</div>
+
+<figure>
+  <table class="striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>内容/关键词</th>
+        <th>禁用范围</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td><small>{{ item.id }}</small></td>
+        <td>
+          <span class="text-sm">{{ item.keywords[:50] }}{% if item.keywords|length > 50 %}...{% endif %}</span>
+          {% if item.keywords|length > 50 %}
+          <details><summary>展开</summary><span class="break-all text-sm">{{ item.keywords }}</span></details>
+          {% endif %}
+        </td>
+        <td>
+          {% if item.global_ban %}
+            <mark style="background: var(--pico-del-color);">全局禁用</mark>
+          {% else %}
+            <code>群 {{ item.ban_group_id }}</code>
+          {% endif %}
+        </td>
+        <td class="actions">
+          <form method="post" action="/learning_chat/admin/blacklist/delete/{{ item.id }}" class="inline-form" onsubmit="return confirm('取消该禁用？内容需要重新学习！')">
+            <button type="submit" class="outline secondary" style="font-size:80%;">取消禁用</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center;">暂无禁用记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</figure>
+
+{{ pagination(page, total_pages, '/learning_chat/admin/blacklist', params) }}
+
+{% endblock %}

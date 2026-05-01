@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}回复 | Learning-Chat{% endblock %}
+{% from "macros.html" import pagination, sort_link %}
+
+{% block content %}
+
+<hgroup>
+  <h2>💬 学习回复</h2>
+  <p>{% if context_id %}查看内容 #{{ context_id }} 的所有回复{% else %}bot已学习到的所有回复{% endif %}</p>
+</hgroup>
+
+{% if success %}
+<article style="background: var(--pico-ins-color); border-color: var(--pico-ins-color);">✅ {{ success }}</article>
+{% endif %}
+
+<form method="get" class="grid" style="margin-bottom: 1rem;">
+  <input name="keywords" placeholder="搜索关键词/回复内容" value="{{ params.get('keywords', '') }}">
+  {% if context_id %}<input type="hidden" name="context_id" value="{{ context_id }}">{% endif %}
+  <button type="submit">🔍 搜索</button>
+  <a href="?" role="button" class="secondary">清除</a>
+</form>
+
+<div style="margin-bottom: 0.5rem;">
+  <small>共 {{ total }} 条回复，第 {{ page }}/{{ total_pages }} 页</small>
+  <form method="post" action="/learning_chat/admin/answers/delete-all{% if context_id %}?context_id={{ context_id }}{% endif %}" class="inline-form" style="float:right;" onsubmit="return confirm('确定要删除{% if context_id %}该内容的所有{% else %}所有{% endif %}已学回复吗？')">
+    <button type="submit" class="danger" style="font-size:85%;">🗑 删除全部</button>
+  </form>
+</div>
+
+<figure>
+  <table class="striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>群ID</th>
+        <th>内容/关键词</th>
+        <th>{{ sort_link('最后学习时间', 'time', order_by, order_dir, '/learning_chat/admin/answers', params) }}</th>
+        <th>{{ sort_link('次数', 'count', order_by, order_dir, '/learning_chat/admin/answers', params) }}</th>
+        <th>回复消息</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td><small>{{ item.id }}</small></td>
+        <td><code>{{ item.group_id }}</code></td>
+        <td>
+          <span class="text-sm">{{ item.keywords[:30] }}{% if item.keywords|length > 30 %}...{% endif %}</span>
+        </td>
+        <td><small>{{ item.time | int | datetime }}</small></td>
+        <td><strong>{{ item.count }}</strong></td>
+        <td>
+          {% set msgs = item.messages if item.messages is iterable and item.messages is not string else [item.messages] %}
+          {% for m in msgs[:3] %}
+            <small class="text-sm">{{ (m.msg if m is mapping else m)[:40] }}{% if (m.msg if m is mapping else m)|length > 40 %}...{% endif %}</small><br>
+          {% endfor %}
+          {% if msgs|length > 3 %}<small>...还有 {{ msgs|length - 3 }} 条</small>{% endif %}
+        </td>
+        <td class="actions">
+          <form method="post" action="/learning_chat/admin/answers/ban/{{ item.id }}" class="inline-form" onsubmit="return confirm('禁用并删除该已学回复？')">
+            <button type="submit" class="outline danger" style="font-size:80%;">禁用</button>
+          </form>
+          <form method="post" action="/learning_chat/admin/answers/delete/{{ item.id }}" class="inline-form" onsubmit="return confirm('仅删除该回复，不禁止学习？')">
+            <button type="submit" class="outline secondary" style="font-size:80%;">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;">暂无数据</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</figure>
+
+{{ pagination(page, total_pages, '/learning_chat/admin/answers', params) }}
+
+{% endblock %}
